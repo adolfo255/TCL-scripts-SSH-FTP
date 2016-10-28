@@ -1,0 +1,1713 @@
+/*Como crear una base de datos*/
+CREATE DATABASE DIPH12;
+
+/*Como abrir una Base de datos*/
+USE DIPH12;
+
+/*Como crear una tabla: Usamos el comando CREATE pero esta vez el objeto es un table
+seguido del nombre de la tabla que se va a crear, DESPUES ENTRE PARENTESIS se escriben
+los nombres de las columnas seguidas de su tipo de dato y separadas con coma.
+Observe que la última columna ya no lleva coma pues no separa nada
+No olvide terminar las sentencias de SQL con ;*/
+
+CREATE TABLE ALUMNO
+(
+	CLAVE INT,
+	NOMBRE VARCHAR(40),
+	APATERNO VARCHAR(20),
+	AMATERNO VARCHAR(20),
+	EDAD INT,
+	CORREO VARCHAR(25)
+);
+
+
+/*Insertar una fila en una tabla.
+Usamos el comando INSERT INTO seguido del nombre de la tabla donde se va a insertar la fila.
+Despues entre parentesis se escriben los nombres de las columnas de latabla seprados con coma.
+Despues la palabara clave VALUES para terminar escrbiendo entre parentesis los datos 
+correspondientes a cada columna separados con coma, sin olvidar que aquellos que son de tipo
+caracter se escriben entre comilla simple*/
+
+INSERT INTO ALUMNO
+(CLAVE,NOMBRE,APATERNO,AMATERNO,EDAD,CORREO)
+VALUES
+(1,'JUAN','PEREZ','LOPEZ',25,'jperez1@hotmail.com');
+
+/*Para consultar los registros que hemos insertado usaremos el comando SELECT*/
+
+SELECT * FROM ALUMNO;
+
+/*Práctica 1 Crear las siguientes tablas e insertar dos filas a cada una
+LIBRO			AUTO
+-----			----
+CLAVE			CLAVE
+TITULO			MARCA
+AUTOR			SUBMARCA
+EDITORIAL		COLOR
+FECHA			NUMSERIE
+TIRAJE			PLACAS
+PAGINAS
+*/
+
+/*RESTRICCIONES
+Una restricción es una limitante que se define para el dato que se ingresa en una columna y ésta 
+puede tener mas de una restricción.
+En muchos casos, son las reglas del negocio las que determinan estas restricciones*/
+
+/*NOT NULL  Define que el dato para una columna es de captura obligatoria (No permite nulos)
+  UNIQUE Establece que el dato en una columna no se puede repetir (único)
+  DEFAULT Define un valor por default en caso de que el dato sea de captura obligatoria y el usuario
+          lo deje NULO 
+  PRIMARY KEY Es la columna de identificación de cada fila, se usa para busqueda de registros,
+              clasificación de consultas y para crear relaciones con otras tablas.
+              Una tabla sólo puede tener una PRIMARY KEY*/
+             
+  /*Ekiminamos la tabla ALUMNO para volver a crearla pero ya definiendoi restricciones*/
+  
+  DROP TABLE ALUMNO;
+  
+    
+  CREATE TABLE ALUMNO
+(
+	IDALUMNO INT PRIMARY KEY,
+	NOMBRE VARCHAR(40) NOT NULL,
+	APATERNO VARCHAR(20) NOT NULL,
+	AMATERNO VARCHAR(20) NULL,
+	EDAD INT NOT NULL,
+	CORREO VARCHAR(25) NOT NULL,
+	CURP VARCHAR(25) NOT NULL UNIQUE,
+	NACIONALIDAD CHAR(1) NOT NULL DEFAULT 'N'
+); 
+
+
+INSERT INTO ALUMNO 
+(IDALUMNO,NOMBRE,APATERNO,AMATERNO,EDAD,CORREO,CURP, NACIONALIDAD)
+VALUES
+(1,'JUAN','PEREZ','LOPEZ',34,'juan@hotmail.com','CURPJUAN','E');
+
+SELECT * FROM ALUMNO;
+
+INSERT INTO ALUMNO 
+(IDALUMNO,NOMBRE,APATERNO,AMATERNO,EDAD,CORREO,CURP, NACIONALIDAD)
+VALUES
+(2,'JUANA','PEREZ','LOPEZ',34,'juan@hotmail.com','CURPJUANA','E');
+
+INSERT INTO ALUMNO 
+(IDALUMNO,NOMBRE,APATERNO,AMATERNO,EDAD,CORREO,CURP)
+VALUES
+(3,'JUANITO','PEREZ','LOPEZ',34,'juan@hotmail.com','CURPJUANITO');
+
+
+
+/*Restricción CHECK. Permite validar el dato que se captura en una columna contra:
+- un solo valor
+- una lista de valores
+- un rango de valores
+- un formato caracter-posición*/
+
+CREATE TABLE USUARIOS
+(
+	USUARIOID CHAR(5) PRIMARY KEY,
+	NOMBRE VARCHAR(35) NOT NULL,
+	EDAD INT NOT NULL--No se puede contratar alguien menor de edad
+		CHECK(EDAD > 17), --Un solo valor
+	GENERO CHAR(1) NOT NULL --Solo se permite F o M
+		CHECK(GENERO IN('F','M')), --Lista de valores
+	SALARIO MONEY NOT NULL--Nadie puede ganar menos de 5000 o mas de 45000
+		CHECK(SALARIO BETWEEN 5000 AND 45000)--Un rango de valores
+);
+
+INSERT INTO USUARIOS
+(USUARIOID,NOMBRE,EDAD,GENERO,SALARIO)
+VALUES
+(1,'JUAN',25,'M',20000);
+
+INSERT INTO USUARIOS
+(USUARIOID,NOMBRE,EDAD,GENERO,SALARIO)
+VALUES
+('2','JUANA',30,'M',20000);
+
+SELECT * FROM USUARIOS;
+
+/*Nombrando las restricciones. Usamos la palabra CONSTRAINT seguida del nombre de
+la restricción para terminar con el tipo de la misma*/
+DROP TABLE ALUMNO;
+
+
+  CREATE TABLE ALUMNO
+(
+	IDALUMNO INT CONSTRAINT PK_ALUMNO_IDALUMNO
+		PRIMARY KEY,
+	NOMBRE VARCHAR(40) NOT NULL,
+	APATERNO VARCHAR(20) NOT NULL,
+	AMATERNO VARCHAR(20) NULL,
+	EDAD INT NOT NULL,
+	CORREO VARCHAR(25) NOT NULL,
+	CURP VARCHAR(25) NOT NULL CONSTRAINT UQ_ALUMNO_CURP
+		UNIQUE,
+	NACIONALIDAD CHAR(1) NOT NULL CONSTRAINT DF_ALUMNO_NACIONALIDAD_N
+		DEFAULT 'N'
+); 
+
+/*Supomga que hay un cambio en la regla de negocio que dertermina que el nuevo salario
+maximo es de 60 000, por tanto deberemos llevar este cambio a la BD
+Paso 1 Eliminar la restriccion check de la columna SALARIO*/
+
+ALTER TABLE USUARIOS --ALTER TABLE se usa para modificar la estructura de una tabla
+DROP CONSTRAINT CK__USUARIOS__SALARI__0BC6C43E;
+
+/*PaSO 2 Agregamos la restriccion con la nueva regla*/
+ALTER TABLE USUARIOS
+ADD CONSTRAINT CK_USUARIOS_SALARIO_ENTRE_5000_Y_60000
+CHECK(SALARIO BETWEEN 5000 AND 60000);
+
+--Probamos el constraint con la modificación
+
+INSERT INTO USUARIOS
+(USUARIOID,NOMBRE,EDAD,GENERO,SALARIO)
+VALUES
+('4','JHON',35,'M',55000);
+
+/*Llave primaria autoincrementable. Es aquella no requiere un dato pues este es generado de forma automatica 
+con un consecutivo numerico entero a partir de un inicio determinado*/
+
+CREATE TABLE CHEQUES
+(
+	CHEQUEID INT IDENTITY(15,1) CONSTRAINT PK_CHEQUES_CHEQUEID
+		PRIMARY KEY,
+	IMPORTE MONEY NOT NULL
+);
+
+INSERT INTO CHEQUES
+(IMPORTE)
+VALUES
+(3000);
+
+SELECT * FROM CHEQUES;
+
+
+/*LLAVE PRIMARIA COMPUESTA. Es aquella que esta formada por más de una columna*/
+
+CREATE TABLE FACTURA
+(
+	SERIE CHAR(1),
+	FAC INT,
+	FECHA DATETIME NOT NULL,
+	CONSTRAINT PK_FACTURA_SERIE_FAC
+		PRIMARY KEY(SERIE,FAC) --Pueden usarse hasta un máximo de 16 columnas
+);
+
+
+/*MODIFICANDO LA ESTRUCTURA DE UNA TABLA
+USANDO EL Comando ALTER TABLE podemos agregar, eliminar o modificar columnas de una tabla*/
+
+--Agregar una columna
+
+ALTER TABLE CHEQUES
+ADD FECHA DATETIME; 
+
+SELECT * FROM CHEQUES;
+
+ALTER TABLE CHEQUES
+ADD BENEFICIARIO VARCHAR(40) NOT NULL DEFAULT ' ';
+
+--Modificar una columna
+
+ALTER TABLE CHEQUES
+ALTER COLUMN BENEFICIARIO VARCHAR(60);
+
+ALTER TABLE CHEQUES
+ADD BANCO VARCHAR(50) NOT NULL DEFAULT 'FALTA BANCO';
+
+--Eliminar una columna
+ALTER TABLE CHEQUES
+DROP BANCO;
+
+ALTER TABLE CHEQUES
+DROP CONSTRAINT DF__CHEQUES__BANCO__21B6055D
+
+ALTER TABLE CHEQUES
+ALTER COLUMN BANCO INT;
+
+/*Eliminando filas de una tabla
+Usamos el comando DELETE */
+
+
+DELETE FROM CHEQUES;
+
+/*El comando anterior eliminaria TODAS las filas de la tabla cheques debido a 
+que no cuenta con un filtro.
+Un filtro es un criterio lógico de selección de filas que utiliza
+los o peradores de compración <  <  <=M  <=  <> y las conectivas lógicas AND  y  OR*/
+
+/*Para crear el filtro, se usa la clausula WHERE*/
+
+SELECT * FROM CHEQUES;
+
+SELECT * FROM CHEQUES
+WHERE
+	IMPORTE >= 2000;
+
+
+DELETE FROM CHEQUES
+WHERE
+	CHEQUEID = 16;
+	
+INSERT INTO CHEQUES
+(IMPORTE,FECHA,BENEFICIARIO,BANCO)
+VALUES
+(5000,GETDATE(),'juan perez','LA ILUSION');--GETDATE es una función dem SQL SERVER
+										   --que me devuelve la fecha del sistema
+										   
+DELETE FROM CHEQUES
+WHERE
+	CHEQUEID = 19;
+	
+
+SELECT IDENT_CURRENT('CHEQUES');--IDENT_CURRENT devuelve el ultimo numero
+								--usado en la columna de identidad de la tabla CHEQUES
+								
+
+--Intentamos recuperar el cheque 19
+
+INSERT INTO CHEQUES
+(CHEQUEID,IMPORTE,FECHA,BENEFICIARIO,BANCO)
+VALUES
+(19,7800,GETDATE(),'juan perez','LA ILUSION');
+
+/*El INSERT anterior, provoca error pues no se puede ingresar un valor explícito
+en una columna de identidad. Se hace necesario activar el parametro IDENTITY_INSERT*/
+
+SET IDENTITY_INSERT CHEQUES ON;
+
+--Reintentamos el INSERT
+
+INSERT INTO CHEQUES
+(CHEQUEID,IMPORTE,FECHA,BENEFICIARIO,BANCO)
+VALUES
+(19,7800,GETDATE(),'juan perez','LA ILUSION');
+
+SELECT * FROM CHEQUES;
+
+--Regresamos el valor por default al parametro IDENTITY_INSERT
+
+SET IDENTITY_INSERT CHEQUES OFF;
+
+/*Actualizar datos en una columna para una o más filas*/
+
+UPDATE CHEQUES
+SET FECHA = GETDATE()
+WHERE
+	CHEQUEID =15;
+	
+--Incrementar en 8% los importes de los cheques del banco LA ILUSION
+
+UPDATE CHEQUES
+SET IMPORTE = IMPORTE * 1.08
+WHERE
+	BANCO = 'LA ILUSION';
+	
+/*Creación de relaciones. Un RDBMS (Relational datab base manager system), permite
+la creación de relaciones entre los objetos TABLE, mediante la definición y creación de Llaves 
+secundarias (FOREIGN KEY).
+Siempre un FK debera ser del mismo tipo que la PK con la que se conecta y no es obligado
+que tengan el mismo nombre*/
+/*Existen diferentes tipos de ralación entre las tablas:
+
+RELACIÓN UNO A VARIOS
+Se da cuando por cada una vez que aparece UNA clave en una tabla como PK, puede aparecer VARIAS veces
+como FK en la otra tabla*/
+
+/*Pasos recomendados para la implementación de una bd
+1. Análisis
+	Entrevistas
+	Cuestionarios
+	Reuniones de trabajo
+	Tareas
+	Observación
+	Documentación fuente
+2. Diseño (Modelo de la base de datos)
+3. Creación de objetos
+	Tablas
+		Columnas
+			Tipos de datos
+			Restricciones
+	Relaciones
+		Foreign keys
+	*/
+
+/*Ejemplo de un script que crea el modelo*/
+
+-- -----------------------------------------------------
+-- Table mydb.CATEGORIA
+-- -----------------------------------------------------
+CREATE TABLE CATEGORIA (
+  idCATEGORIA INT NOT NULL,
+  NOMBRE VARCHAR(45) NOT NULL,
+  PRIMARY KEY (idCATEGORIA));
+
+-- -----------------------------------------------------
+-- Table mydb.PRODUCTO
+-- -----------------------------------------------------
+CREATE TABLE PRODUCTO (
+  idPRODUCTO VARCHAR(5) NOT NULL primary key,
+  DESCRIPCION VARCHAR(60) NOT NULL,
+  PRECIO DECIMAL(7,2) NOT NULL,
+  EXISTENCIA INT NULL,
+  ESTATUS CHAR(1) NOT NULL,
+  idCATEGORIA INT NOT NULL,
+  CONSTRAINT fk_producto_categoria
+    FOREIGN KEY (idCATEGORIA)
+    REFERENCES CATEGORIA(idCATEGORIA)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+
+-- -----------------------------------------------------
+-- Table mydb.VENDEDOR
+-- -----------------------------------------------------
+CREATE TABLE VENDEDOR (
+  idVENDEDOR INT NOT NULL,
+  NOMBRE VARCHAR(45) NOT NULL,
+  APELLIDO VARCHAR(45) NOT NULL,
+  COMISION DECIMAL(4,2) NOT NULL,
+  PRIMARY KEY (idVENDEDOR))
+
+
+
+-- -----------------------------------------------------
+-- Table mydb.CLIENTE
+-- -----------------------------------------------------
+CREATE TABLE CLIENTE (
+  idCLIENTE INT NOT NULL,
+  NOMBRE VARCHAR(50) NOT NULL,
+  EMAIL VARCHAR(45) NULL,
+  PRIMARY KEY (idCLIENTE));
+
+
+
+-- -----------------------------------------------------
+-- Table mydb.ORDTRAB
+-- -----------------------------------------------------
+CREATE TABLE ORDTRAB (
+  ID INT NOT NULL,
+  FECHA DATETIME NOT NULL,
+  CANTIDAD INT NOT NULL,
+  idPRODUCTO VARCHAR(5) NOT NULL,
+  PRIMARY KEY (ID),
+  CONSTRAINT fk_ordetrab_productos
+    FOREIGN KEY (idPRODUCTO)
+    REFERENCES PRODUCTO (idPRODUCTO)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+
+
+
+-- -----------------------------------------------------
+-- Table mydb.VENTA
+-- -----------------------------------------------------
+CREATE TABLE VENTA (
+  idVENTA INT NOT NULL,
+  FECHA DATETIME NOT NULL,
+  idVENDEDOR INT NOT NULL,
+  idPRODUCTO VARCHAR(5) NOT NULL,
+  idCLIENTE INT NULL,
+  CANTIDAD INT NULL,
+  PRECIO DECIMAL(7,2) NULL,
+  PRIMARY KEY (idVENTA),
+  CONSTRAINT FK_VENTA_VENDEDOR
+    FOREIGN KEY (idVENDEDOR)
+    REFERENCES VENDEDOR (idVENDEDOR)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT FK_VENTA_PRODUCTO
+    FOREIGN KEY (idPRODUCTO)
+    REFERENCES PRODUCTO (idPRODUCTO)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT FK_VENTA_CLIENTE
+    FOREIGN KEY (idCLIENTE)
+    REFERENCES CLIENTE (idCLIENTE)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+
+	
+
+	
+/*COMANDO SELECT. Permite el desarrollo de consultas hacia la BD*/
+
+SELECT * FROM CHEQUES;
+
+SELECT * FROM Northwind.dbo.PRODUCTS;
+
+SELECT * FROM Northwind.dbo.Suppliers;
+
+SELECT * FROM Northwind.dbo.Categories;
+
+SELECT * FROM Northwind.dbo.Employees;
+
+SELECT * FROM Northwind.dbo.Customers;
+
+--Clientes de London y mEXICO, d.f.
+
+SELECT * FROM Northwind.dbo.Customers
+WHERE
+	City in('México D.F.','London');
+
+--Productos con un  precio entre 50 y 90 pesos 
+--Pedidos del cliente ALFKI o del Cliente VINET que fueron vendidos por el vendedor 2,3,4 ó 5,.
+
+SELECT * FROM Northwind.dbo.PRODUCTS
+WHERE
+	UnitPrice BETWEEN 50 AND 90;
+	
+SELECT * FROM Northwind.dbo.Orders
+WHERE
+	CustomerID IN ('ALFKI','VINET')
+AND
+	EmployeeID BETWEEN 2 AND 5;
+	
+/*Lista de seleccion de columnas*/
+
+SELECT CUSTOMERID, COMPANYNAME, CONTACTNAME,
+ADDRESS,CITY,REGION
+FROM 
+	Northwind.dbo.Customers;
+
+/*Catalogo de articulos para revision de precios de las cataegorias*/
+
+SELECT PRODUCTID,PRODUCTNAME, CATEGORYID, UNITSINSTOCK, UNITPRICE
+FROM 
+	Northwind.dbo.PRODUCTS;
+
+
+
+/*Uso de alias en los nombres de las columnas*/
+
+SELECT PRODUCTID AS 'CLAVE',
+PRODUCTNAME AS 'DESCRIPCION',
+CATEGORYID AS 'CLAVE CATEGORIA',
+UNITSINSTOCK AS 'EXISTENCIA', 
+UNITPRICE AS 'PRECIO'
+FROM 
+	Northwind.dbo.PRODUCTS;
+	
+
+SELECT PRODUCTID CLAVE,
+PRODUCTNAME  DESCRIPCION,
+CATEGORYID 'CLAVE CATEGORIA',
+UNITSINSTOCK  EXISTENCIA, 
+UNITPRICE  PRECIO
+FROM 
+	Northwind.dbo.PRODUCTS;
+
+/*COLUMNAS CALCULADAS
+Son aquellas que no existen en la tabla sino que se obtiene en el resutset
+del resultado de una operación aruitmética simple (+ - * /)*/
+
+SELECT * FROM Northwind.dbo.PRODUCTS;
+
+
+SELECT PRODUCTID CLAVE,
+PRODUCTNAME  DESCRIPCION,
+UNITSINSTOCK  EXISTENCIA, 
+UNITPRICE  PRECIO,
+(UnitPrice * UnitsInStock) 'VALOR INV LISTA'
+
+FROM 
+	Northwind.dbo.PRODUCTS;
+
+/*La empresa tiene el plan de vender toda la existencia de los productos de categoria 3
+con un descuento general del 25%, pero antes de tomar la decisión, desea tener
+una consulta que muestre como quedaría el total de cada producto con el precio con 
+descuento*/
+
+SELECT PRODUCTID CLAVE,
+PRODUCTNAME  DESCRIPCION,
+UNITSINSTOCK  EXISTENCIA, 
+UNITPRICE  PRECIO,
+(UnitPrice * UnitsInStock) 'VALOR INV LISTA',
+(UnitPrice * UnitsInStock) * .75 'VALOR PROMOCION',
+(UnitPrice * UnitsInStock) * .25 'IMPORTE DESCUENTO'
+FROM 
+	Northwind.dbo.PRODUCTS
+WHERE
+	CategoryID = 3;
+
+
+/*PEDIDO  PRODUCTO  CANTIDAD  PRECIO  %DESCTO  BRUTO  IMPORTE_DESCUENTO   SUBTOTAL     IVA   TOTAL
+  ------  --------  --------  ------  -------  ------ -----------------   --------   ------  -------*/
+SELECT * FROM Northwind.dbo.[Order Details];
+
+SELECT ORDERID PEDIDO,
+	PRODUCTID PRODUCTO,
+	QUANTITY CANTIDAD,
+	UNITPRICE PRECIO,
+	DISCOUNT '%DESCTO',
+	(QUANTITY * UNITPRICE) BRUTO,
+	((QUANTITY * UNITPRICE) * DISCOUNT) 'IMPORTE DESCTO',
+	(QUANTITY * UNITPRICE) - ((QUANTITY * UNITPRICE) * DISCOUNT) SUBTOTAL,
+	(((QUANTITY * UNITPRICE) - ((QUANTITY * UNITPRICE) * DISCOUNT)) * .16) IVA,
+	(QUANTITY * UNITPRICE) - ((QUANTITY * UNITPRICE) * DISCOUNT) +
+		(((QUANTITY * UNITPRICE) - ((QUANTITY * UNITPRICE) * DISCOUNT)) * .16) TOTAL
+FROM 
+	Northwind.dbo.[Order Details];
+	
+/*Funciones de agregado. 
+Son aquellas que devuelven un solo valor despues de haber realizado la consulta
+a una o más filas. Cuando se instala SQL SERVER, ya vienen integradas estas funciones*/
+
+/*COUNT() Cuenta el numero de filas de una tabla*/
+--Cuantos renglones tenemos en Order Details
+
+SELECT COUNT(*) RENGLONES FROM Northwind.dbo.[Order Details] ;
+
+--SUM() Suma los valores numericos de una columna y devuelve el total
+--
+SELECT COUNT(*) Renglones, SUM(UnitPrice*QUANTITY) TOTAL
+ FROM Northwind.dbo.[Order Details];
+
+--AVG() Obtiene el promedio de los valores numericos en una columna
+--Precio promedio por renglon
+SELECT COUNT(*) Renglones, SUM(UnitPrice*QUANTITY) TOTAL,
+	AVG(UNITPRICE*QUANTITY) 'VENTA PROMEDIO' 
+ FROM Northwind.dbo.[Order Details];
+ 
+ SELECT COUNT(*) Renglones, SUM(UnitPrice*QUANTITY) TOTAL,
+	SUM(UnitPrice*QUANTITY) / COUNT(*) 'VENTA PROMEDIO' 
+ FROM Northwind.dbo.[Order Details];
+
+/*MIN() Devuelve el dato más pequeño en una columna*/
+
+SELECT COUNT(*) Renglones, SUM(UnitPrice*QUANTITY) TOTAL,
+	AVG(UNITPRICE*QUANTITY) 'VENTA PROMEDIO',
+	MIN(UnitPrice*QUANTITY) 'VENTA MENOR'
+ FROM Northwind.dbo.[Order Details];
+
+/*MAX() Devuelve el dato más grande en una columna*/
+
+
+SELECT COUNT(*) Renglones, SUM(UnitPrice*QUANTITY) TOTAL,
+	AVG(UNITPRICE*QUANTITY) 'VENTA PROMEDIO',
+	MIN(UnitPrice*QUANTITY) 'VENTA MENOR',
+	MAX(UnitPrice*QUANTITY) 'VENTA MAYOR'
+ FROM Northwind.dbo.[Order Details];
+ 
+ SELECT MIN(COMPANYNAME) FROM Northwind.dbo.CUSTOMERS;	
+ SELECT MAX(COMPANYNAME) FROM Northwind.dbo.CUSTOMERS;	
+	
+/*GROUP BY
+Se usa para agrupar el resultado de la consulta por una(s) columna(s) específica(s)
+Se conoce como consultas ejecutivas o de resumen pues solo muestran totales sin importar el detalle 
+que los integra. 
+Son muy usadas para la toma de decisiones
+La función GROUP BY se usa conjuntamente con las funciones de agregado*/ 
+
+--Ejemplo. Querie que muestra las ventas por Producto
+
+SELECT PRODUCTID, SUM(QUANTITY * UNITPRICE) TOTAL
+FROM
+	Northwind.dbo.[Order Details]
+GROUP BY PRODUCTID
+ORDER BY TOTAL DESC--Clausula que ordena la consulta por una o más columnas;
+
+--Cuantos productos tengo de cada categoria
+--Cual es el importe que representan esas categorías
+
+SELECT CATEGORYID CLAVE,
+	COUNT(*) PIEZAS,
+	SUM(UnitPrice * UnitsInStock) IMPORTE
+FROM 
+	Northwind.dbo.PRODUCTS
+GROUP BY 
+	CATEGORYID
+ORDER BY IMPORTE DESC;
+
+/*Si deseamos hacer un filtro de las filas agrupadas, no podemos usar WHERE
+pues el mecanismo interno contempla leer una fila y revisar el WHERE para saber
+si se incluye o no, siendo así, al leer la primera fila aún no tenemos el valor
+ total de la función de agregado
+ En estos casos se debe usar la clausula HAVING.
+ HAVING desarrlla de manera interna una subconsulta que obtiene los totales
+ crea una tabla con ellos y es la que usa para la comparación del where, es decir,
+ HAVING es la primera consulta que se ejecuta*/
+ 
+ SELECT CATEGORYID CLAVE,
+	COUNT(*) PIEZAS,
+	SUM(UnitPrice * UnitsInStock) IMPORTE
+FROM 
+	Northwind.dbo.PRODUCTS
+WHERE
+	CategoryID > 2
+GROUP BY 
+	CATEGORYID
+having SUM(UnitPrice * UnitsInStock) > 10000
+ORDER BY IMPORTE DESC;
+ 
+--Cuantos pedidos tengo por Vendedor ORDERS
+--Mostrar solo aquellos que sean mas de 8 pedidos
+
+SELECT EMPLOYEEID VENDEDOR, 
+
+/*Funciones de fecha*/
+
+SELECT GETDATE() HOY;
+
+SELECT DAY(GETDATE()) DIA, --Devuelve el dia de la fecha de hoy
+MONTH(GETDATE()) MES,
+YEAR(GETDATE()) AÑO;
+
+SELECT DATENAME(MONTH,GETDATE()) MES;
+SELECT DATENAME(DY,GETDATE()) DIA;
+SELECT DATENAME(D,GETDATE()) DIA;
+
+SELECT DATEDIFF(DAY,'2009/05/21',GETDATE())--Devuelve la diferencia entre dos fechas en 
+					--un intervalo dado como primer parametro
+	
+SELECT DATEDIFF(MONTH,'2009/05/21',GETDATE())
+
+SELECT DATEDIFF(MINUTE,'2009/05/21',GETDATE())
+
+
+
+/* Unión de tablas (Join)
+Select permite consultar desde más de una tabla mediante la unión de éstas,
+usando para ello una columna en común que normalmente es la PK de una tabla 
+y LA FK  de la otra, auque no necesariamente.
+Puede ocurrir que cuando unimos dos tablas existan nombres de columnas repetidos
+en ellas lo qwue provoca un error de ambiguedad en los nombres de columna.
+Lo anterior se resuelve escribiendo el nombre de la tabla antes del nombre de la columna 
+separandolos con un punto. Ejemplo :  Products.Categoryid   Categories.CategoryId
+
+Existen dos formas sintácticas para unir tablas:
+
+a) Usando WHERE. Aquí se escriben en la cláusula FROM los nombres de las tablas que
+se van a aunir separandolos con un punto y se usa WHERE para establecer el criterio
+de igualdad entre los datos de las columnas de unión
+*/
+SELECT Northwind.dbo.PRODUCTS.CATEGORYID CLAVE,
+	Northwind.dbo.Categories.CategoryName NOMBRE,
+	COUNT(*) PIEZAS,
+	SUM(UnitPrice * UnitsInStock) IMPORTE
+FROM 
+	Northwind.dbo.PRODUCTS, Northwind.dbo.Categories
+WHERE
+	Northwind.dbo.PRODUCTS.CategoryID = Northwind.dbo.Categories.CategoryID
+AND
+	Northwind.dbo.PRODUCTS.CategoryID > 2
+GROUP BY 
+	Northwind.dbo.PRODUCTS.CATEGORYID, Northwind.dbo.Categories.CategoryName
+having SUM(UnitPrice * UnitsInStock) > 10000
+ORDER BY IMPORTE DESC;
+
+
+SELECT * FROM Northwind.dbo.PRODUCTS;
+
+
+/*Consulta que muestre los pedidos con la inforamción siguiente:
+PEDIDO    CLIENTE    NOMBRE     VENDEDOR   NOMBRE
+*/
+
+SELECT ORDERID PEDIDO, Northwind.dbo.Customers.CustomerID CLIENTE,
+	COMPANYNAME NOMBRE, Northwind.dbo.Employees.EmployeeID VENDEDOR,
+	FIRSTNAME
+FROM Northwind.dbo.ORDERS, Northwind.dbo.CUSTOMERS, Northwind.dbo.EMPLOYEES
+WHERE
+	Northwind.dbo.ORDERS.CustomerID = Northwind.dbo.Customers.CustomerID
+AND
+	Northwind.dbo.ORDERS.EmployeeID = Northwind.dbo.Employees.EmployeeID;
+
+
+SELECT Northwind.dbo.[Order Details].PRODUCTID, PRODUCTNAME DESCRIPCION,
+ SUM(QUANTITY * Northwind.dbo.[Order Details].UNITPRICE) TOTAL
+FROM
+	Northwind.dbo.[Order Details], Northwind.dbo.Products
+WHERE
+	Northwind.dbo.[Order Details].ProductID = Northwind.dbo.Products.productid
+GROUP BY Northwind.dbo.[Order Details].PRODUCTID, PRODUCTNAME
+ORDER BY TOTAL DESC
+
+
+
+/*Piezas por categoría que incluya solo claves mayores a 2*/
+
+
+SELECT ORDERID PEDIDO,
+	Northwind.dbo.[Order Details].ProductID PRODUCTO,
+	Productname DESCRIPCION,
+	QUANTITY CANTIDAD,
+	Northwind.dbo.[Order Details].UNITPRICE PRECIO,
+	DISCOUNT '%DESCTO',
+	(QUANTITY * Northwind.dbo.[Order Details].UNITPRICE) BRUTO,
+	((QUANTITY * Northwind.dbo.[Order Details].UNITPRICE) * DISCOUNT) 'IMPORTE DESCTO',
+	(QUANTITY * Northwind.dbo.[Order Details].UNITPRICE) - ((QUANTITY * Northwind.dbo.[Order Details].UNITPRICE) * DISCOUNT) SUBTOTAL,
+	(((QUANTITY * Northwind.dbo.[Order Details].UNITPRICE) - ((QUANTITY * Northwind.dbo.[Order Details].UNITPRICE) * DISCOUNT)) * .16) IVA,
+	(QUANTITY * Northwind.dbo.[Order Details].UNITPRICE) - ((QUANTITY * Northwind.dbo.[Order Details].UNITPRICE) * DISCOUNT) +
+		(((QUANTITY * Northwind.dbo.[Order Details].UNITPRICE) - ((QUANTITY * Northwind.dbo.[Order Details].UNITPRICE) * DISCOUNT)) * .16) TOTAL
+FROM 
+	Northwind.dbo.[Order Details], Northwind.dbo.Products
+WHERE
+	Northwind.dbo.[Order Details].ProductID = Northwind.dbo.Products.ProductID;
+	
+
+/*Uso de alias para los nombres de las tablas
+Su objetivo principal es reducir el codigo*/
+
+SELECT P.CATEGORYID CLAVE,
+	C.CategoryName NOMBRE,
+	COUNT(*) PIEZAS,
+	SUM(UnitPrice * UnitsInStock) IMPORTE
+FROM 
+	Northwind.dbo.PRODUCTS AS P, Northwind.dbo.Categories AS C
+WHERE
+	P.CategoryID = C.CategoryID
+AND
+	P.CategoryID > 2
+GROUP BY 
+	P.CATEGORYID, C.CategoryName
+having SUM(UnitPrice * UnitsInStock) > 10000
+ORDER BY IMPORTE DESC;
+
+/*b)Usando INNER JOIN (Unión interna)
+Aquí solo se escribe en la clausula FROM, el nombre de la tabla principal
+y se usa un INNER JOIN para cada tabla que se va a unir, seguido de la palabara clave ON
+que especifica la union de igualdad idéntico a como lo hizo el WHERE
+*/
+
+SELECT P.CATEGORYID CLAVE,
+	C.CategoryName NOMBRE,
+	COUNT(*) PIEZAS,
+	SUM(UnitPrice * UnitsInStock) IMPORTE
+FROM 
+	Northwind.dbo.PRODUCTS AS P
+	INNER JOIN Northwind.dbo.Categories AS C
+	ON
+		P.CategoryID = C.CategoryID
+WHERE
+	P.CategoryID > 2
+GROUP BY 
+	P.CATEGORYID, C.CategoryName
+having SUM(UnitPrice * UnitsInStock) > 10000
+ORDER BY IMPORTE DESC;
+
+
+/*CONSULTAS EXTERNAS  OUTER JOINS*/
+
+
+CREATE TABLE TBL_B
+(
+	IDB INT,
+	C2B CHAR(2),
+	C3B CHAR(2)
+);
+
+CREATE TABLE TBL_A
+(
+	IDA INT,
+	C2A CHAR(2),
+	C3A CHAR(2)
+);
+INSERT INTO TBL_A
+(IDA,C2A,C3A)
+VALUES
+(1,'AA','11'),
+(3,'CC','33'),
+(4,'DD','44'),
+(6,'FF','66');
+
+INSERT INTO TBL_B
+(IDB,C2B,C3B)
+VALUES
+(1,'AA','11'),
+(2,'BB','22'),
+(4,'DD','44'),
+(5,'EE','55');
+
+SELECT * FROM TBL_A;
+SELECT * FROM TBL_B;
+
+SELECT A.*, B.*
+FROM
+	TBL_A A
+	INNER JOIN TBL_B B
+	ON
+		A.IDA = B.IDB
+		
+SELECT A.*, B.*
+FROM
+	TBL_A A
+	LEFT JOIN TBL_B B
+	ON
+		A.IDA = B.IDB
+
+SELECT A.*, B.*
+FROM
+	TBL_A A
+	RIGHT JOIN TBL_B B
+	ON
+		A.IDA = B.IDB
+		
+SELECT A.*, B.*
+FROM
+	TBL_A A
+	FULL JOIN TBL_B B
+	ON
+		A.IDA = B.IDB
+
+SELECT * FROM Northwind.dbo.Employees;
+
+SELECT DATEDIFF(YEAR,HIREDATE,GETDATE())
+FROM
+	Northwind.dbo.Employees;
+	
+/*CLAVE  NOMBRE   FECHA_ALTA  AÑOS*/
+
+SELECT EMPLOYEEID CLAVE,
+	FIRSTNAME NOMBRE,
+	HIREDATE FECHA_ALTA,
+	DATEDIFF(YEAR,HIREDATE,GETDATE()) AÑOS
+FROM
+	Northwind.dbo.Employees
+WHERE
+	DATEDIFF(YEAR,HIREDATE,GETDATE())>23;
+	
+
+
+--PEDIDOS QUE NO CUMPLIERON FECHA DE ENTREGA
+
+SELECT * FROM Northwind.dbo.ORDERS;
+
+
+
+SELECT ORDERID PEDIDO, REQUIREDDATE REQUERIDO, SHIPPEDDATE EMBARCADO,
+DATEDIFF(DAY,REQUIREDDATE,SHIPPEDDATE) RETRASO
+FROM
+	Northwind.dbo.ORDERS
+WHERE
+	DATEDIFF(DAY,REQUIREDDATE,SHIPPEDDATE) > 0;
+	
+/*CONSULTAS AVANZADAS (SUBQUERIES)
+Una subconsulta es una consulta anidada en otra y se usa para la obtención de 
+valores que se usarán en el filtro de la  consulta externa, es decir, la subconsulta
+recuperara un conjunto de valores que serviran en la clausula WHERE de la
+consulta en la que está anidada
+La subconsulta debe encerrarse entre parentesis*/
+
+/*Ejemplo. Suponga que no conoce la clave del producto CHAI y le piden
+una consulta que muestre los renglones de la tabla ORDER DETAILS donde 
+se vendió este producto*/
+
+SELECT * FROM Northwind.dbo.[Order Details];
+
+
+SELECT ORDERID PEDIDO, PRODUCTNAME NOMBRE,
+OD.PRODUCTID PRODUCTO,
+QUANTITY CANTIDAD, OD.UNITPRICE PRECIO
+FROM
+	Northwind.dbo.[Order Details] OD
+	INNER JOIN Northwind.dbo.Products P
+	ON
+		OD.ProductID = P. ProductID
+WHERE
+	OD.ProductID IN
+		(SELECT PRODUCTID FROM Northwind.dbo.PRODUCTS
+		WHERE
+			ProductName IN('chai','chang'));
+
+/*Consulta que muestra los clientes que no pusieron cuando menos un pedido
+en el mes de enero del 97*/	
+
+SELECT CUSTOMERID CLIENTE, COMPANYNAME NOMBRE,
+	PHONE TELEFONO
+FROM
+	Northwind.dbo.CUSTOMERS
+WHERE 
+	CUSTOMERID NOT IN
+		(SELECT CUSTOMERID 
+		FROM
+			Northwind.dbo.ORDERS O
+		WHERE
+			MONTH(ORDERDATE) = 1
+		AND
+			YEAR(ORDERDATE) = 1997);
+
+--Consulta que muestre que vendedores no pusieron cuando menos 
+--un pedido en la ultima quincena del mes de febrero del 97
+
+--VENDEDOR  NOMBRE
+SELECT EMPLOYEEID VENDEDOR, FIRSTNAME NOMBRE
+FROM
+	Northwind.dbo.Employees
+WHERE
+	EmployeeID NOT IN
+	
+		(
+			SELECT EmployeeID FROM Northwind.dbo.ORDERS
+			 WHERE
+				MONTH(ORDERDATE)= 2
+			AND
+				DAY(ORDERDATE) > 14
+			AND
+				YEAR(ORDERDATE) = 1997
+		);
+
+--Consulta que muestre que productos se vendieron arriba del precio promedio
+--existente en PRODUCTS y en que pedidos
+
+SELECT ORDERID PEDIDO, od.PRODUCTID PRODUCTO, PRODUCTNAME DESCRIPCION,
+	OD.UNITPRICE PRECIO
+FROM
+	Northwind.dbo.[Order Details] OD
+	INNER JOIN Northwind.dbo.Products P
+	ON
+		OD.ProductID = P.ProductID
+WHERE
+	OD.UNITPRICE >
+		(
+			SELECT AVG(UNITPRICE) FROM Northwind.dbo.Products
+		);
+
+
+/*VISTAS
+Una vista es un objeto más en la base de datos y se usa para proteger las tablas 
+ya que su consulta se realiza a través de estas vistas.
+La vista se crea a partir de un QUERY y si este contiene columnas calculadas
+o con funciones de agregado, es obligatorio que tengan su alias.
+Asimismo, en una vista no se puede usar la clase ORDER BY.
+La vista se actualiza en linea cada vez que alguna de las tablas de dependencia 
+(las tablas que usa el query)se actualiza Ejemplo*/
+
+--VISTA PARA CONSULTAR LOS EMPLEADOS 
+
+alter VIEW Vw_Empleados
+AS
+	SELECT EMPLOYEEID, FIRSTNAME, REPORTSTO JEFE, --El alias será a partir de ahora
+	LASTNAME 
+	FROM Northwind.dbo.EMPLOYEES;				 --el nombre de la columna de la vista
+
+
+
+SELECT V.EMPLOYEEID VENDEDOR,
+V.FIRSTNAME NOMBRE,
+JEFE,E.FIRSTNAME 'NOMBRE JEFE'--La columna JEFE es de la vista no de EMPLOYEES
+FROM VW_EMPLEADOS V--Consultamos los empleados a partir de la vista
+INNER JOIN Northwind.dbo.EMPLOYEES E --unión entre la vista y una tabla
+ON
+	V.JEFE = E.EMPLOYEEID;
+
+
+SELECT V.EMPLOYEEID VENDEDOR,
+V.FIRSTNAME + ' ' + V.LASTNAME  NOMBRE, V.BIRTHDATE CUMPLE,
+ISNULL(JEFE,0) JEFE,
+ISNULL(E.FIRSTNAME,'Dueño') 'NOMBRE JEFE'--La columna JEFE es de la vista no de EMPLOYEES
+FROM VW_EMPLEADOS V--Consultamos los empleados a partir de la vista
+LEFT JOIN Northwind.dbo.EMPLOYEES E --unión entre la vista y una tabla
+ON
+	V.JEFE = E.EMPLOYEEID;
+
+
+SELECT ISNULL('ALGO','ES NULO'); --ISNULL valida el primer parametro y si éste es nulo, 
+								 --devuelve el segundo parametro, en caso contrario 
+								 --devuelve el primero
+SELECT ISNULL(NULL,'ES NULO');   
+
+
+/*Crear la siguiente vista
+Vw_VentasEmpleado
+-----------------
+clave
+nombre_completo
+venta ($)*/
+
+
+CREATE VIEW Vw_ventasEmpleado
+AS
+SELECT O.EMPLOYEEID CLAVE,
+FIRSTNAME + ',' + LASTNAME NOMBRE_COMPLETO,
+SUM(OD.UNITPRICE * QUANTITY) VENTA
+FROM Northwind.dbo.ORDERS O
+INNER JOIN Northwind.dbo.[ORDER DETAILS] OD
+	ON
+	O.ORDERID = OD.ORDERID
+INNER JOIN Northwind.dbo.EMPLOYEES E
+	ON
+	O.EMPLOYEEID = E.EMPLOYEEID
+GROUP BY O.EMPLOYEEID,FIRSTNAME + ',' + LASTNAME
+
+
+SELECT * FROM Vw_ventasEmpleado;
+		
+/*PROCEDIMIENTOS ALMACENADOS  (STORE PROCEDURE)
+UN SP ES UN OBJETO MAS EN LA BASE DE DATOS Y SE USA PARA ENCAPSULAR PROCESOS
+REPETITIVOS POR LA VENTAJA QUE REPRESENTAN EN CUANTO AL RENDIMIENTO.
+
+MECANISMO INTERNO DE LA OPERACION DE LOS SP
+
+EXISTE UN COMPONENTE EN SQL SERVER LLAMADO OPTIMIZADOR DE CONSULTAS QUIEN ES EL ENCARGADO 
+DE ELABORAR LOS PLANES DE EJECUCION (CUAL ES MEJOR CAMINO PARA LA OBTENCION DEL RESULTSET)
+CON BASE EN LOS ELEMENTOS QUE SE INVOLUCRAN EN LA CONSULTA (INNER JOIN, FOREIGN KEY, GROUP BY,
+ORDER BY, INDEX, ETC) Y SI DETECTA QUE ESTE PROCEDIMIENTO ES MUY REPETITVO (SE USA MUCHO)
+LO COLOCA EN EL CACHE DE LOS PROCEDIMIENTOS LO QUE ACELERA SU EJECUCION.
+SI EL QUERIE QUE EJECUTA EL PROCEDIMMIENTO O LAS TABLAS QUE UTILIZA SUFREN ALGUNA MODIFICACIÓN,
+SE DESTRUYE EL PLAN ORIGINA Y SE CREA OTRO*/
+
+--Ejemplo de un SP que consulta clientes
+USE DIPH12;
+
+CREATE PROCEDURE Up_Clientes
+AS
+	SELECT * FROM Northwind.dbo.Customers;
+
+--Un procedimiento se puede ejecutar de las siguientes formas:
+
+EXECUTE Up_Clientes;
+EXEC Up_Clientes;
+Up_Clientes --Si y solo si esta linea es la primera de un lote de lineas en el script
+
+
+SELECT * FROM Northwind.dbo.Customers;
+EXEC Up_Clientes
+
+
+SELECT * FROM Northwind.dbo.Customers;
+GO --Provoca que la siguiente linea sea otra vez la primera 
+Up_Clientes
+
+/*Cuando se instala SQL SERVER, incluye algunos procedimientos conocidos como de 
+sistema cuyo nombre inica con SP_ Ejemplo.*/
+
+EXECUTE SP_HELPDB DIPH12;--Devuelve metadata de la base de datos
+
+--Manipulando algo de metadata
+CREATE DATABASE PRUEBA_METADATA
+ON
+(
+	NAME = PRUEBA_LOGICO,
+	FILENAME = 'C:\USR\PRUEBA_FISICO.MDF',
+	SIZE = 10,
+	MAXSIZE = 50,
+	FILEGROWTH = 1
+);
+
+EXECUTE SP_HELPDB PRUEBA_METADATA;
+EXECUTE sp_help cheque;
+
+SELECT * FROM CHEQUE;
+
+INSERT INTO CHEQUE
+(IMPORTE)
+VALUES
+(5000);
+
+--Modificando un SP
+ALTER PROCEDURE Up_Clientes
+AS
+	SELECT CustomerID CLIENTE, CompanyName NOMBRE
+	FROM Northwind.dbo.Customers;
+
+EXEC Up_Clientes;
+
+--Eliminando un Store Procedure
+
+DROP PROCEDURE Up_Clientes;
+
+/*UN SP puede recibir parametros de entrada que son usados como valores dentro del procedimiento
+Ejemplo*/
+
+CREATE PROCEDURE Up_Consulta_Un_Cliente
+@CLAVE VARCHAR(5)--Los parametros se define despues del nombre del SP y siempre con una @
+AS
+	BEGIN  --Indica el inicio del bloque de código
+		SELECT CustomerID CLIENTE, CompanyName NOMBRE
+		FROM Northwind.dbo.Customers
+		WHERE
+			CustomerID = @CLAVE; 
+	END --Indica el fin del bloque de código
+
+
+Up_Consulta_Un_Cliente 'VINET';
+
+--Ejemplo que recibe dos parametros
+
+CREATE PROCEDURE Up_Pedidos_Vend_Cliente
+@VENDEDOR INT, @CLIENTE VARCHAR(5)
+AS
+	BEGIN
+		SELECT OrderID PEDIDO, CustomerID CLIENTE, EmployeeID VENDEDOR
+		FROM Northwind.dbo.ORDERS
+		WHERE
+			CustomerID = @CLIENTE
+		AND
+			Employeeid = @VENDEDOR 
+	END
+
+
+Up_Pedidos_Vend_Cliente 2,'VINET'
+
+ALTER PROCEDURE Up_Pedidos_Vend_Cliente
+@VENDEDOR INT, @CLIENTE VARCHAR(5)
+AS
+	BEGIN
+		SELECT OrderID PEDIDO, O.CustomerID CLIENTE, COMPANYNAME NOMBRE,
+		O.EmployeeID VENDEDOR, FIRSTNAME  NOMBRE
+		FROM Northwind.dbo.ORDERS O
+		INNER JOIN Northwind.dbo.CUSTOMERS C
+		ON
+			O.CustomerID = C.CustomerID
+		INNER JOIN Northwind.dbo.Employees E
+		ON
+			O.EmployeeID = E.EmployeeID
+		WHERE
+			O.CustomerID = @CLIENTE
+		AND
+			O.Employeeid = @VENDEDOR 
+	END
+
+/*UN SP ademas de recibir parametros de entrada, tambien puede devolver datos de salida 
+en parametros de esta naturaleza. Ejemplo:*/
+
+CREATE PROCEDURE Up_Devuelve
+@NUM1 INT,
+@NUM2 INT,
+@SUMA INT OUTPUT --OUTPUT Declara un parámetro como de salida
+AS
+	BEGIN
+		SET @SUMA = @NUM1 + @NUM2--SET asigna un dato a un parametro o variable
+	END
+	
+ALTER PROCEDURE Up_Recibe
+as
+	BEGIN
+		DECLARE @RESULTADO INT
+		EXECUTE Up_Devuelve 8 , 9 , @RESULTADO OUTPUT
+		SET @RESULTADO = @RESULTADO + 10
+		PRINT 'EL RESULTADO ES:' + CAST(@RESULTADO AS CHAR)--Concatenar con el signo de + valores tipo char
+											 --la funcion CAST() convierte un tipo de dato a otro
+	END
+
+Up_Recibe
+
+--SP que recibe el nume de vendedor una fina inical y una final y muestra sus pedidos de ese periodo
+
+ALTER PROCEDURE up_PedidosVendPeriodo
+@VENDEDOR INT,
+@FECHAINI DATETIME,
+@FECHAFIN DATETIME
+AS
+	BEGIN
+		SELECT ORDERID PEDIDO, ORDERDATE FECHA
+		FROM Northwind.dbo.ORDERS
+		WHERE
+			EMPLOYEEID = @VENDEDOR
+		AND
+			ORDERDATE BETWEEN @FECHAINI AND @FECHAFIN	
+	END
+
+
+up_PedidosVendPeriodo 1,'19970301', '19971231'	
+
+
+USE NORTHWIND
+EXECUTE sp_help ORDERS
+
+
+
+CREATE PROCEDURE Up_VentasVendPeriodo
+@VENDEDOR INT,
+@FECHAINI DATETIME,
+@FECHAFIN DATETIME
+AS
+	BEGIN
+		SELECT O.EMPLOYEEID VENDEDOR, FIRSTNAME + ',' + LASTNAME NOMBRE,
+			SUM(UNITPRICE * QUANTITY) MONTO_VENTA
+		FROM
+			Northwind.dbo.Orders O
+			INNER JOIN Northwind.dbo.[Order Details] OD
+			ON
+				O.OrderID = OD.OrderID
+			INNER JOIN Northwind.dbo.Employees E
+			ON
+				O.EmployeeID = E.EmployeeID
+		WHERE
+			O.EMPLOYEEID = @VENDEDOR		
+		AND
+			ORDERDATE BETWEEN @FECHAINI AND @FECHAFIN
+		GROUP BY 
+			O.EMPLOYEEID, FIRSTNAME + ',' + LASTNAME
+	END			
+			
+
+Up_VentasVendPeriodo 6, '19970301', '19971231'
+
+/*PROGRAMACION CON Transact-SQL*/
+--Declaración, inicialización e impresión de una variable
+
+DECLARE @V_UNO INT --declarar 
+DECLARE @V_DOS INT, @V_TRES INT --declarar
+SET @V_UNO = 5 --inicializando una variable
+PRINT @V_UNO --imprimiendo el valor que almacena la variable
+
+/*Estructura de control IF...ELSE
+Se dice que es selectiva pues dependiendo de la validación de una condición transfiere el control del programa
+hacia otra parte del mismo.
+Es de naturaleza boleana (boolean) porque devuelve un true o un false dependiendo 
+de la validación que hace de una condición que a su vez puede utilizar los operadores
+de comparacion <  >  <=  >=  <>  =  y la conectivas lógicas AND  y  OR Ejemplo:*/
+
+DECLARE @V_NUMERO INT
+SET @V_NUMERO = 11
+IF(@V_NUMERO = 11) BEGIN
+	--Ambito de la lineas que se ejcutan si la condicion devuelve TRUE (BEGIN Y END)
+	PRINT 'ES IGUAL A 11'
+	PRINT 'ES DECIR SE FUE POR EL TRUE'
+END
+ELSE BEGIN
+	--Ambito de la lineas que se ejcutan si la condicion devuelve FALSE (BEGIN Y END)	
+	PRINT 'ES DIFERENTE DE 11'
+END
+
+/*EL uso de BEGIN END, es opcional si el ambito del if o el else, tiene solo una linea*/
+
+DECLARE @V_NUMERO INT
+SET @V_NUMERO = 11
+IF(@V_NUMERO = 11) 
+	--Ambito de la lineas que se ejcutan si la condicion devuelve TRUE (BEGIN Y END)
+	PRINT 'ES IGUAL A 11'
+ELSE 
+	--Ambito de la lineas que se ejcutan si la condicion devuelve FALSE (BEGIN Y END)	
+	PRINT 'ES DIFERENTE DE 11'
+
+/*Un IF no necesariamente se acompaña de un ELSE*/
+
+DECLARE @V_DATO INT
+SET @V_DATO = 20
+IF(@V_DATO > 10)
+	PRINT 'ES MAYOR A 10'
+IF(@V_DATO < 10)
+	PRINT 'ES MENOR A 10'
+IF(@V_DATO = 10)
+	PRINT 'ES IGUAL A 10'
+
+/*IF ANIDADO
+Es un IF dentro de otro IF y se recomienda usar cuando se trata de 3 posibles respuestas a una condición*/
+
+DECLARE @V_DATO INT
+SET @V_DATO = 10
+IF(@V_DATO > 10)
+	PRINT 'ES MAYOR A 10'
+ELSE BEGIN
+	IF(@V_DATO < 10)
+		PRINT 'ES MENOR A 10'
+	ELSE
+		PRINT 'ES IGUAL A 10'
+END
+
+/*Ejemplo de IF con una función de SQL SERVER*/
+USE DIPH12;
+SELECT OBJECT_ID('CHEQUE') ID_OBJETO; --Devuelve el ID del objeto en caso de 
+									--que exista, si no entonces devuelve NULL
+
+IF(OBJECT_ID('CHEQUE')) IS NOT NULL
+	PRINT 'SI EXISTE'
+ELSE
+	PRINT 'NO EXISTE'
+
+--Script que si existe una tabla la borra y la vuelve a crear, si no existe
+--la crea
+
+IF(OBJECT_ID('TBL_PRUEBA')) IS NOT NULL BEGIN
+	DROP TABLE TBL_PRUEBA
+	PRINT 'LA BORRO'
+END
+CREATE TABLE TBL_PRUEBA (ID INT, CAMPO2 CHAR(2));
+PRINT 'LA CREO'
+
+/*Estructura de control CASE
+Se utiliza cuando existen mas de 3 posibilidades de respuesta a una 
+condición dada*/
+
+
+--Case en un SELECT
+
+DECLARE @V_VARIABLE INT
+SET @V_VARIABLE = 6
+SELECT SALIDA = 
+	CASE @V_VARIABLE
+		WHEN 1 THEN 'ES UN UNO'
+		WHEN 2 THEN 'ES UN DOS'
+		WHEN 3 THEN 'ES UN TRES'
+		WHEN 4 THEN 'ES UN CUATRO'
+		WHEN 5 THEN 'ES UN CINCO'
+		ELSE 'FUERA DE RANGO' --En caso de que "caiga "en algunio de los valores 
+							--del WHEN
+	END;
+
+--Usando CASE con lista y rango de valores
+
+DECLARE @V_VARIABLE INT
+SET @V_VARIABLE = 22
+SELECT SALIDA = --Usamos SELECT si asignamos un valor a una columna del resutset
+	CASE 
+		WHEN @V_VARIABLE BETWEEN 1 AND 5 THEN 'ENTRE UNO Y CINCO'
+		WHEN @V_VARIABLE BETWEEN 6 AND 10 THEN 'ENTRE SEIS Y DIEZ'
+		WHEN @V_VARIABLE IN(15,20) THEN 'ES UN QUINCE O UN VEINTE'
+		WHEN @V_VARIABLE > 20 THEN 'ES MAYOR A 20'
+		ELSE 'FUERA DE RANGO'
+	END;
+
+
+--Ejemplo de uncase que determina si el producto es PREMIUM
+--Si el precio es mayor a 20 es PREMIUM en caso contrario es ESTANDAR
+
+SELECT PRODUCTID CLAVE, PRODUCTNAME DESCRIPCION,
+	UNITPRICE PRECIO,
+	TIPO = 
+	CASE 
+		WHEN UNITPRICE > 20 THEN 'PREMIUM'
+		WHEN UNITPRICE <= 20 THEN 'ESTANDAR'
+	END
+FROM
+	Northwind.dbo.Products
+ORDER BY 4 DESC;
+	
+	
+SELECT * FROM Northwind.dbo.Employees;
+
+--CLAVE   NOMBRE_COMPLETO   TITULO  GENHERO
+--  1	  NAMCY DAVOLIO		Ms.     femenino
+
+SELECT EMPLOYEEID CLAVE, FIRSTNAME + ' ' + LASTNAME NOMBRE_COMPLETO,
+TITLEOFCOURTESY TITULO,
+GENERO = 
+CASE 
+	WHEN TITLEOFCOURTESY IN ('Ms.','Mrs.') THEN 'FEMENINO'
+	ELSE 'MASCULINO'
+END
+FROM
+	
+	Northwind.dbo.Employees
+ORDER BY 4;
+
+--CASE en un script
+
+DECLARE @V_NUMERO INT, @V_NUM_LETRA VARCHAR(30)
+SET @V_NUMERO = 3
+SET @V_NUM_LETRA = --Usamos SET si asignamos un valor a una variable
+	CASE @V_NUMERO
+		WHEN 1 THEN 'UNO'
+		WHEN 2 THEN 'DOS'
+		WHEN 3 THEN 'TRES'
+	END
+PRINT @V_NUM_LETRA
+
+SELECT * FROM Northwind.dbo.ORDERS;
+
+SELECT ORDERID PEDIDO, REQUIREDDATE REQUERIDO,
+	SHIPPEDDATE EMBARQUE, 
+	DATEDIFF(DAY, REQUIREDDATE,SHIPPEDDATE) ATRASO,
+	ACCION = 
+		CASE
+			WHEN DATEDIFF(DAY, REQUIREDDATE,SHIPPEDDATE) < 5 THEN 'PREMURA'
+			WHEN DATEDIFF(DAY, REQUIREDDATE,SHIPPEDDATE) BETWEEN 5 AND 10 THEN 'PRIORIDAD ALTA'
+			WHEN DATEDIFF(DAY, REQUIREDDATE,SHIPPEDDATE) > 10 THEN 'CANCELAR'
+		END
+	FROM
+		Northwind.dbo.ORDERS
+	WHERE
+		DATEDIFF(DAY, REQUIREDDATE,SHIPPEDDATE) > 0
+	ORDER BY 5;
+	
+/*ESTRUCTURA DE CONTROL WHILE
+ES DE TIPO repetitiva pues permite desarrollar clclos que se repiten MIENTRAS (WHILE)
+una condicion devuelve TRUE, por lo tanto tambien es de natureleza Boolean.
+Un ciclo es un grupo de instrucciones que se repiten MIENTRAS el WHILE  devuelve TRUE
+*/
+
+DECLARE @V_CONTADOR INT
+SET @V_CONTADOR = 1
+WHILE (@V_CONTADOR <= 10) BEGIN
+	PRINT @V_CONTADOR
+	SET @V_CONTADOR = @V_CONTADOR + 1
+END
+
+
+--WHILE QUE INSERTA 500 FILAS A LA TABLA TBL_PRUEBA
+
+
+DECLARE @V_CONTADOR INT
+SET @V_CONTADOR = 1
+WHILE (SELECT COUNT(*)  FROM TBL_PRUEBA) <=500 BEGIN
+	INSERT INTO TBL_PRUEBA
+	(ID, CAMPO2)
+	VALUES
+	(@V_CONTADOR,'AA')
+	SET @V_CONTADOR = @V_CONTADOR + 1
+END
+SELECT * FROM TBL_PRUEBA;
+
+
+/*Un WHILE puede interrumpirse de manera abrupta si encuentra la instruccion BREAK en alguna
+parte dentro del ciclo*/
+
+DECLARE @V_CONTADOR INT
+SET @V_CONTADOR = 1
+WHILE (SELECT COUNT(*)  FROM TBL_PRUEBA) <=500 BEGIN
+	INSERT INTO TBL_PRUEBA
+	(ID, CAMPO2)
+	VALUES
+	(@V_CONTADOR,'AA')
+	SET @V_CONTADOR = @V_CONTADOR + 1
+	IF(@V_CONTADOR = 200)
+		BREAK;
+END
+
+SELECT * FROM TBL_PRUEBA;
+
+/*Copiar los registros de la tabla PRODUCTS de NORTHWIND  aa una nueva tabla 
+que llamaremos ARTICULOS*/
+
+SELECT * INTO ARTICULOS --La tabla ARTICULOS NO DEBE existir
+FROM Northwind.dbo.Products;
+
+select * from articulos;
+
+/*Desarrolle un script que duplique el precio de cada producto solo de la categoria 2
+	repetitivamente hasta que se cumpla una de dos posibilidades:
+
+1. Algun precio de algun prodcuto rebase los 500 pesos
+2. El precio promedio de todos los productos sea mayor a 300*/
+
+DROP TABLE ARTICULOS;
+
+DECLARE @BANDERA INT
+SET @BANDERA = 0
+WHILE (SELECT MAX(UNITPRICE)FROM ARTICULOS
+		WHERE
+		CATEGORYID = 2) < 50000 BEGIN
+	UPDATE ARTICULOS
+	SET
+		UNITPRICE = UNITPRICE * 2
+	WHERE
+		CATEGORYID = 2;
+
+	IF(SELECT AVG(UNITPRICE) FROM ARTICULOS
+		WHERE
+			CATEGORYID = 2) > 300 BEGIN
+		SET @BANDERA = 1
+		BREAK;
+	END
+END
+IF(@BANDERA = 1)
+	PRINT 'TERMINA POR EL PRECIO PROMEDIO'
+ELSE
+	PRINT 'TERMINA POR EL PRECIO MAXIMO'
+
+
+
+/*Uso de la clausula TOP
+Permite mostrar solo los primeros registros de una tabla dependiendo del query*/
+
+SELECT TOP 10 * FROM ARTICULOS
+ORDER BY PRODUCTID DESC;
+
+/*Procedimiento HISTORICO*/
+
+--Paso 1 Creamos las tablas necesarias
+
+
+CREATE TABLE FACTURA
+(
+	FACTID INT PRIMARY KEY,
+	FECHA DATETIME NOT NULL,
+	IMPORTE MONEY NOT NULL,
+	ESTATUS INT
+);
+
+CREATE TABLE HISTORICO
+(
+	FACTID INT PRIMARY KEY,
+	FECHA DATETIME NOT NULL,
+	FECHA_H DATETIME NOT NULL,
+	IMPORTE MONEY NOT NULL
+);
+
+--Paso 2 Poblamos la tabla
+
+INSERT INTO FACTURA
+(FACTID,FECHA,IMPORTE,ESTATUS)
+VALUES
+(10,'20160110',1000,0),
+(11,'20160105',2000,0),
+(12,'20160303',3000,0),
+(13,'20160301',4000,0),
+(14,'20160215',5000,0);
+
+SELECT * FROM FACTURA
+
+DECLARE @V_CUANTOS INT
+SET @V_CUANTOS = 2
+SELECT TOP @V_CUANTOS * FROM FACTURA
+ORDER BY FECHA;
+
+/*El script anterior provoca una excepcion debido a que no es válido usar una variable en el top
+¿Cómo hacerlo dinámico? Usamos el concepto de SQL DINAMICO que es la caracteristica de 
+SQL SERVER de ejecutar cadenas de texto con forma de sentencia SQL*/
+
+DECLARE @V_CUANTOS INT, @CADENA VARCHAR(100)
+SET @V_CUANTOS = 3
+--RTRIM() Elimina los espacios a laderecha de una cadena de texto
+SET @CADENA = 'SELECT TOP ' + RTRIM(CAST(@V_CUANTOS AS CHAR)) + ' * FROM FACTURA 
+					ORDER BY FECHA;'
+PRINT @CADENA
+EXECUTE(@CADENA)
+
+--Paso  3 Creamos el PROCEDURE
+
+ALTER PROCEDURE Up_HISTORICO
+@P_CUANTOS INT,
+@P_MES INT
+AS
+	BEGIN
+		DECLARE @CADENA VARCHAR(300), @CADENA_VISTA VARCHAR(300)
+		--Si ya existe la vista, la borra y la crea
+		IF OBJECT_ID('Vw_HISTORICO') IS NOT NULL
+			DROP VIEW Vw_HISTORICO
+		SET @CADENA_VISTA = 'CREATE VIEW Vw_HISTORICO
+		AS
+			SELECT TOP ' + RTRIM(CAST(@P_CUANTOS AS CHAR)) + ' 
+			FACTID FROM FACTURA
+				WHERE MONTH(FECHA) = ' + RTRIM(CAST(@P_MES AS CHAR)) + 
+				' AND ESTATUS = 0 ORDER BY FECHA;'
+		EXECUTE (@CADENA_VISTA)
+		--Seleccion de las filas que se pasan
+		--RTRIM() Elimina los espacios a laderecha de una cadena de texto
+		SET @CADENA = 'SELECT TOP ' + RTRIM(CAST(@P_CUANTOS AS CHAR)) + ' 
+		FACTID,FECHA,GETDATE(),IMPORTE FROM FACTURA
+				WHERE MONTH(FECHA) = ' + RTRIM(CAST(@P_MES AS CHAR)) + 
+				' AND ESTATUS = 0 ORDER BY FECHA;'
+		PRINT @CADENA
+		--Insertamos las filas seleccionadas
+		INSERT INTO HISTORICO
+		(FACTID,FECHA,FECHA_H,IMPORTE)
+		EXECUTE(@CADENA)
+		--Actualización del ESTATUS en FACTURA
+		UPDATE FACTURA
+			SET ESTATUS = 1
+			WHERE
+				FACTID IN 
+					(
+						SELECT * FROM Vw_HISTORICO
+					);
+	END
+	
+Up_HISTORICO 2,3
+
+SELECT * FROM HISTORICO;
+DELETE FROM HISTORICO;
+SELECT * FROM FACTURA;
+UPDATE FACTURA SET ESTATUS = 0;
+
+/*TABLAS TEMPORALES
+Son creadas por un usuario y no persisten en la base de datos en sesion, sino que se crean en
+tempDB. Solo el uusario que la creo en su instancia, tiene acceso a esas tablas
+(LOCALES), en el caso de las globales cualquier usuario puede acceder a ellas.
+*/
+
+CREATE TABLE #TBL_TEMPORAL
+(
+	ID INT PRIMARY KEY,
+	CAMPO2 CHAR(2)
+);
+
+
+INSERT INTO #TBL_TEMPORAL
+VALUES
+(1,'AA');
+
+SELECT * FROM #TBL_TEMPORAL;
+
+
+CREATE TABLE ##TBL_TEMPORALG
+(
+	ID INT PRIMARY KEY,
+	CAMPO2 CHAR(2)
+);
+
+INSERT INTO ##TBL_TEMPORALG
+VALUES
+(1,'AA');
+
+SELECT * FROM ##TBL_TEMPORALG;
+
+
+--La tabla se destruye una vez que el usuario que la creo sale de sesion.
+--Si es creada desde un SP se destruye una vez que termina la ejecucion 
+--del mismo..
+
+CREATE PROCEDURE Up_Temporal
+AS
+	BEGIN
+		CREATE TABLE #TEMP 
+		(
+			ID INT IDENTITY,
+			CLAVE VARCHAR(5),
+			NOMBRE VARCHAR(50)
+		);
+		INSERT INTO #TEMP
+		(CLAVE,NOMBRE)
+		SELECT CUSTOMERID,COMPANYNAME
+		FROM
+			Northwind.dbo.Customers;
+		SELECT * FROM #TEMP
+	END;
+
+Up_Temporal
+
+--Version del SP usando Tabla temporal
+
+ALTER PROCEDURE Up_HISTORICO_TT
+@P_CUANTOS INT,
+@P_MES INT
+AS
+	BEGIN
+		DECLARE @CADENA VARCHAR(300),@CADENA_TABLA VARCHAR(300)
+		--Si ya existe la vista, la borra y la crea
+		CREATE TABLE #TBL_TEMPORAL_H
+		(
+			FACTID INT
+		);
+		SET @CADENA_TABLA = 
+		'SELECT TOP ' + RTRIM(CAST(@P_CUANTOS AS CHAR)) + ' 
+			FACTID FROM FACTURA
+				WHERE MONTH(FECHA) = ' + RTRIM(CAST(@P_MES AS CHAR)) + 
+				' AND ESTATUS = 0 ORDER BY FECHA;'
+		INSERT INTO #TBL_TEMPORAL_H
+		EXECUTE (@CADENA_TABLA)
+		
+		--Seleccion de las filas que se pasan
+		--RTRIM() Elimina los espacios a laderecha de una cadena de texto
+		SET @CADENA = 'SELECT TOP ' + RTRIM(CAST(@P_CUANTOS AS CHAR)) + ' 
+		FACTID,FECHA,GETDATE(),IMPORTE FROM FACTURA
+				WHERE MONTH(FECHA) = ' + RTRIM(CAST(@P_MES AS CHAR)) + 
+				' AND ESTATUS = 0 ORDER BY FECHA;'
+		PRINT @CADENA
+		--Insertamos las filas seleccionadas
+		INSERT INTO HISTORICO
+		(FACTID,FECHA,FECHA_H,IMPORTE)
+		EXECUTE(@CADENA)
+		--Actualización del ESTATUS en FACTURA
+		UPDATE FACTURA
+			SET ESTATUS = 1
+			WHERE
+				FACTID IN 
+					(
+						SELECT * FROM #TBL_TEMPORAL_H
+					);
+	END
+	
+	DELETE FROM HISTORICO;
+	UPDATE FACTURA SET ESTATUS = 0
+	
+Up_HISTORICO_TT 2,3
+
+SELECT * FROM FACTURA;
+SELECT * FROM HISTORICO;
