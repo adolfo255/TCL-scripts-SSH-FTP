@@ -1,0 +1,29 @@
+#/bin/expect
+set gate xxxx@xxxx.xxxx.xxx.xxx
+set preToken 12345678
+set hostname xxxx
+set token [lindex $argv 0]
+set session [lindex $argv 1]
+spawn ssh ${gate}
+expect "Enter PASSCODE:"
+send "${preToken}${token}\r"
+expect "xxxxx:"
+send "xxxxx\r"
+expect "login:"
+send "\r"
+expect "xxxxx password:"
+send "xxxxx\r"
+expect "$"
+send "pblogin -i xxxxx\r"
+expect "Select host number:"
+send "xxxx\r"
+expect "]"
+send "msend(){ uuencode \$1 \$1 | mail -s \"\$1\" myEmail; }\r"
+send "set -o emacs\r"
+expect "]"
+send "cd xxxxx/\r"
+expect "]"
+send "echo ${session}\r"
+expect "]"
+send "if \[\[ -n \$(fsn ${session}) \]\]; then echo \"Here is the sesion that you are looking for\n Details:\"; fsn ${session};else echo \"the file is not here\";fi\r"
+interact
